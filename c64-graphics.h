@@ -1,10 +1,22 @@
 /** Copyright 2024 Warren Wilbur - MIT License
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #ifndef C64_GRAPHICS_H
@@ -67,6 +79,7 @@ struct CharacterModeMemoryMappedAddresses
     unsigned char *vic2MemoryBankPtr; //6502 address of memory mapped vic2 memory bank
     unsigned char *screenDataPtr; //6502 address of memory mapped character (PETSCII) code screen data
     unsigned char *characterSetDataPtr; //6502 address of memory mapped character set (pixel) definition data
+    unsigned char *spriteDataPtrs; //6502 address of sprite data blocks for all eight sprites supported by the VIC-II chip
     //color ram is fixed at 0xd800 in character graphics mode
 };
 typedef struct CharacterModeMemoryMappedAddresses CharacterModeMemoryMappedAddresses_t;
@@ -256,6 +269,26 @@ void DrawRectangle_StandardCharacterMode(
         unsigned char width,
         // [in] row height of rectangle, a number between 0-24 (must be on screen)
         unsigned char height,
+        // [in] screenDataPtr from CharacterModeMemoryMappedAddresses_t
+        unsigned char* screenDataPtr);
+
+void DrawTriangle_StandardCharacterMode(
+        // [in] PETSCII code of the character to draw
+        char ch,
+        // [in] text foreground color is a number between 0-15 (use the color constants in c64.h to improve readability)
+        unsigned char foregroundColor,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x1,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y1,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x2,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y2,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x3,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y3,
         // [in] screenDataPtr from CharacterModeMemoryMappedAddresses_t
         unsigned char* screenDataPtr);
 
@@ -451,6 +484,22 @@ void DrawRectangle_StandardBitmapMode(
         unsigned short width,
         // [in] row height of rectangle, a number between 0-199 (must be on screen)
         unsigned short height,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawTriangle_StandardBitmapMode(
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x1,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y1,
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x2,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y2,
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x3,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y4,
         // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
         unsigned char *bitmapDataPtr);
 

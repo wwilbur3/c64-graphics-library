@@ -1,20 +1,33 @@
 /** Copyright 2024 Warren Wilbur - MIT License
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #include "c64-graphics.h"
-#include <string.h>
 
-#ifdef KICKC
+#include <string.h>
+#ifdef DEBUG
     #include <printf.h>
-#else //if not defined KICKC
+#endif
+
+#ifndef KICKC
     // For portability we will define c64 memory locations here
-    #define RASTER         ((unsigned char* const)0xD012)
     #define VICII_MEMORY   ((unsigned char* const)0xd018)
     #define VICII_CONTROL1 ((unsigned char* const)0xd011)
     #define VICII_CONTROL2 ((unsigned char* const)0xd016)
@@ -104,6 +117,7 @@ void GetVic2CharacterModeMemoryMappedAddresses(
     memoryMappedAddressesPtr->characterSetDataPtr = memoryMappedAddressesPtr->vic2MemoryBankPtr + (unsigned short)characterSetDataIndex*1024;
     characterScreenDataIndex = ((unsigned char)(*VICII_MEMORY) & 0xF0) >> 4;
     memoryMappedAddressesPtr->screenDataPtr = memoryMappedAddressesPtr->vic2MemoryBankPtr + (unsigned short)characterScreenDataIndex*1024;
+    memoryMappedAddressesPtr->spriteDataPtrs = memoryMappedAddressesPtr->screenDataPtr + 1016;
 }
 
 void SetVic2CharacterModeMemoryLocations(
@@ -170,15 +184,6 @@ void SetScreenBackgroundAndBorderColors(
 {
     *BG_COLOR0 = backgroundColor0;
     *BORDER_COLOR = borderColor;
-}
-
-// Use this to prevent screen tearing
-void WaitUntilRasterOffscreen(void)
-{
-    do
-    {
-        ; // Nothing
-    } while (*RASTER != 200); // Wait until raster line 200 on screen is drawn (vertical resolution is 0-199). Lines 200-255 are off the screen.
 }
 
 /** Standard Character Mode */
@@ -585,6 +590,31 @@ void DrawRectangle_StandardCharacterMode(
     DrawHorizontalLine_StandardCharacterMode(ch, foregroundColor, x,       x+width, y+height, screenDataPtr);
     DrawVerticalLine_StandardCharacterMode(  ch, foregroundColor, x,       y,       y+height, screenDataPtr);
     DrawVerticalLine_StandardCharacterMode(  ch, foregroundColor, x+width, y,       y+height, screenDataPtr);
+}
+
+void DrawTriangle_StandardCharacterMode(
+        // [in] PETSCII code of the character to draw
+        char ch,
+        // [in] text foreground color is a number between 0-15 (use the color constants in c64.h to improve readability)
+        unsigned char foregroundColor,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x1,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y1,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x2,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y2,
+        // [in] column index of corner of the triangle, a number between 0-39
+        unsigned char x3,
+        // [in] row index of of corner of the triangle, a number between 0-24
+        unsigned char y3,
+        // [in] screenDataPtr from CharacterModeMemoryMappedAddresses_t
+        unsigned char* screenDataPtr)
+{
+    DrawLine_StandardCharacterMode(ch, foregroundColor, x1, y1, x2, y2, screenDataPtr);
+    DrawLine_StandardCharacterMode(ch, foregroundColor, x2, y2, x3, y3, screenDataPtr);
+    DrawLine_StandardCharacterMode(ch, foregroundColor, x3, y3, x1, y1, screenDataPtr);
 }
 
 // Bresenham's Circle Algorithm: http://members.chello.at/%7Eeasyfilter/Bresenham.pdf
@@ -1154,6 +1184,27 @@ void DrawRectangle_StandardBitmapMode(
     DrawHorizontalLine_StandardBitmapMode(x,       x+width, y+height, bitmapDataPtr);
     DrawVerticalLine_StandardBitmapMode(  x,       y,       y+height, bitmapDataPtr);
     DrawVerticalLine_StandardBitmapMode(  x+width, y,       y+height, bitmapDataPtr);
+}
+
+void DrawTriangle_StandardBitmapMode(
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x1,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y1,
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x2,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y2,
+        // [in] column index of corner of the triangle, a number between 0-319
+        unsigned short x3,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y3,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    DrawLine_StandardBitmapMode(x1, y1, x2, y2, bitmapDataPtr);
+    DrawLine_StandardBitmapMode(x2, y2, x3, y3, bitmapDataPtr);
+    DrawLine_StandardBitmapMode(x3, y3, x1, y1, bitmapDataPtr);
 }
 
 // Bresenham's Circle Algorithm: http://members.chello.at/~easyfilter/bresenham.html and http://members.chello.at/%7Eeasyfilter/Bresenham.pdf

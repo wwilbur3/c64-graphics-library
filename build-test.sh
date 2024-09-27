@@ -10,5 +10,5 @@ KICKC_PATH=kickc/bin
 # Refer to: kickc.pdf (KickC Reference Manual, Version 0.8, Section 3 "KickC Command Line Reference")
 KICKC_OPTS=-t c64 -a -Oliverangecallpath -Sl -DKICKC
 
-$KICKC_PATH/kickc.sh $KICKC_OPTS -emu $VICEBIN ../../c64-graphics.c ../../graphics-test.c
+$KICKC_PATH/kickc.sh $KICKC_OPTS -emu $VICEBIN ../../c64-graphics.c ../../c64-util.c ../../graphics-test.c
 

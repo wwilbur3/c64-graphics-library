@@ -1,34 +1,48 @@
-/** Copyright 20(CHARACTER_SCREEN_HEIGHT-1) Warren Wilbur - MIT License
+/** Copyright 2024 Warren Wilbur - MIT License
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the ï¿½Softwareï¿½), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED ï¿½AS ISï¿½, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #ifdef KICKC
- #include <c64.h>
- #include <printf.h>
- #include <c64-keyboard.h>
- #include <multiply.h>
- #include <division.h>
- #include <stdlib.h>
- #include <c64-time.h>
- #include <c64-print.h>
- #include <division.h>
+    #include <c64.h>
+    #include <printf.h>
+    #include <c64-keyboard.h>
+    #include <multiply.h>
+    #include <division.h>
+    #include <stdlib.h>
+    #include <c64-time.h>
+    #include <c64-print.h>
+    #include <division.h>
+#else //SDCC, CC65, VBCC, OSCAR64
+    #ifdef OSCAR64
+        #define KEY_RETURN 0x01
+        #include <conio.h>
+    #else //SDCC, CC65, VBCC
+        #define KEY_RETURN 0x0D
+    #endif
+    #include <stdio.h>
 #endif
 
-#ifdef CC65
- #include <stdio.h>
- #include <conio.h>
-#endif
-
-#ifdef VBCC
- #include <stdio.h>
-#endif
+#include <string.h>
 
 #include "c64-graphics.h"
+#include "c64-util.h"
 
 // Wait until the user presses <RETURN> after each drawing test
 //#define PAUSE
@@ -39,32 +53,6 @@
 // Determines if drawing routines will attempt to draw outside the screen (for testing)
 //#define TEST_SAFE_DRAW
 
-#ifdef KICKC
-// Assumptions: you have already called keyboard_init() (from c64-keyboard.h) before using this function
-void WaitUntilKeyPressed(
-        //! [in] PETSCII code for the key to wait until pressed (use codes in c64-keyboard.h)
-        char desiredKey)
-{
-    char ch = 0xFF;
-    do
-    {
-        keyboard_event_scan();
-        ch = keyboard_event_get();
-    } while(ch != desiredKey);
-}
-#else //not KICKC
-#define KEY_RETURN 0x0D
-void WaitUntilKeyPressed(
-        //! [in] keyboard scan code to wait until pressed
-        char desiredKey)
-{
-    char ch = 0xFF;
-    do
-    {
-        ch = getchar();
-    } while(ch != desiredKey);
-}
-#endif
 
 int main()
 {
@@ -73,7 +61,7 @@ int main()
     unsigned char color = 0;
     unsigned char color2;
     unsigned char color3;
-    char ch = 'a';
+    char ch = 0;
     unsigned char i = 0;
     signed char si;
     unsigned char width_c;
@@ -87,17 +75,36 @@ int main()
     keyboard_init();
 #endif
 
+#ifdef OSCAR64
+    ch = 65; //Use PETSCII code 65 ('A')
+#else
+    ch = 'a'; //Use ASCII code 'a' (which equals PETSCII code 'A')
+#endif
+#ifdef OSCAR64
+    //switch to the lowercase PETSCII font while printing (via printf)
+    iocharmap(IOCHM_PETSCII_2);
+#endif
+    printf("\nwelcome to the c64 graphics library test");
+    for (i=0; i<255; i++)
+    {
+        SetScreenForegroundColor_StandardCharacterMode(1);
+        SetScreenBackgroundAndBorderColors(i&0x0f, i&0x0f);
+    }
+#ifdef PAUSE
+    printf("      press return after each test");
+    WaitUntilKeyPressed(KEY_RETURN);
+#endif
+
     // standard character mode testing
     GetVic2CharacterModeMemoryMappedAddresses(&characterModeAddresses);
     //characterModeAddresses.vic2MemoryBankPtr = SetVic2VideoMemoryBank(1);
-    //SetVic2BitmapMemoryLocations(1, 1, &characterModeAddresses);
+    //SetVic2CharacterModeMemoryLocations(1, 1, &characterModeAddresses);
     SetMode_StandardCharacterMode(BLACK);
 
     ClearScreen_StandardCharacterMode(characterModeAddresses.screenDataPtr);
     SetScreenForegroundColor_StandardCharacterMode(WHITE);
     SetScreenBackgroundAndBorderColors(BLACK, BLACK);
 #ifdef PAUSE
-    printf("%s", "graphics demo: press return to continue after each stage. press return to begin the test.");
     WaitUntilKeyPressed(KEY_RETURN);
 #endif
 
@@ -105,7 +112,11 @@ int main()
     for (i=0; i<26; i++)
     {
         WaitUntilRasterOffscreen();
-        ch = 'a' + i;
+#ifdef OSCAR64
+        ch = 65 + i; //Use PETSCII screen code 65 ('A')
+#else
+        ch = 'a' + i; //Use ASCII code 'a' (which equals PETSCII code 'A')
+#endif
 #ifdef DEBUG
         printf("s1:i=%x, char=%c ", i, ch);
 #endif
@@ -129,7 +140,11 @@ int main()
 #endif
 
     // line drawing tests - standard character mode
-    ch = 'a';
+#ifdef OSCAR64
+    ch = 65; //Use PETSCII screen code 65 ('A')
+#else
+    ch = 'a'; //Use ASCII code 'a' (which equals PETSCII code 'A')
+#endif
     FillScreen_StandardCharacterMode(ch, characterModeAddresses.screenDataPtr);
     SetScreenForegroundColor_StandardCharacterMode(1);
     // line drawing tests 1 - standard character mode - originate from top-left
@@ -265,7 +280,11 @@ int main()
         color = ++color % 16;
         color2 = (color+1) % 16;
         color3 = (color+2) % 16;
-        ch = 'a' + i;
+#ifdef OSCAR64
+        ch = 65 + i; //Use PETSCII screen code 65 ('A')
+#else
+        ch = 'a' + i; //Use ASCII code 'a' (which equals PETSCII code 'A')
+#endif
         SetScreenBackgroundColors_MulticolorCharacterMode(color, color2, color3);
         FillScreen_StandardCharacterMode(ch, characterModeAddresses.screenDataPtr);
     }
@@ -289,12 +308,16 @@ int main()
     printf("SetVic2VideoMemoryBank()");
     WaitUntilKeyPressed(KEY_RETURN);
 #endif
+#ifdef VBCC
     bitmapModeAddresses.vic2MemoryBankPtr = SetVic2VideoMemoryBank(1);
+#else
+    bitmapModeAddresses.vic2MemoryBankPtr = SetVic2VideoMemoryBank(2);
+#endif
 #ifdef DEBUG
     printf("SetVic2BitmapModeMemoryLocations()");
     WaitUntilKeyPressed(KEY_RETURN);
 #endif
-    SetVic2BitmapModeMemoryLocations(1, 0, &bitmapModeAddresses);
+    SetVic2BitmapModeMemoryLocations(1, 1, &bitmapModeAddresses);
 
     // screen fill test - standard bitmap mode
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
