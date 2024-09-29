@@ -72,11 +72,10 @@
 // Use this to prevent screen tearing
 void WaitUntilRasterOffscreen(void)
 {
-#ifndef OSCAR64
-    while (*RASTER != 200) // Wait until raster line 200 on screen is drawn (vertical resolution is 0-199). Lines 200-255 are off the screen.
+    volatile unsigned char const *rasterLinePtr = RASTER;
+    while (*rasterLinePtr != 200) // Wait until raster line 200 on screen is drawn (vertical resolution is 0-199). Lines 200-255 are off the screen.
     {
         ; // Nothing
     }
-#endif
 }
 

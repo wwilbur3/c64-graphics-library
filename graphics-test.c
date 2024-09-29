@@ -1,7 +1,7 @@
 /** Copyright 2024 Warren Wilbur - MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the �Software�), to
+ * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
@@ -10,7 +10,7 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED �AS IS�, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -53,6 +53,8 @@
 // Determines if drawing routines will attempt to draw outside the screen (for testing)
 //#define TEST_SAFE_DRAW
 
+// Faster bitmap testing, increase loop increment value to not draw every line (e.g. two to draw every other line)
+#define BITMAP_TEST_STEP 5
 
 int main()
 {
@@ -111,7 +113,6 @@ int main()
     // screen fill test - standard character mode
     for (i=0; i<26; i++)
     {
-        WaitUntilRasterOffscreen();
 #ifdef OSCAR64
         ch = 65 + i; //Use PETSCII screen code 65 ('A')
 #else
@@ -129,7 +130,6 @@ int main()
     // screen color test - standard character mode
     for (i=0; i<16; i++)
     {
-        WaitUntilRasterOffscreen();
 #ifdef DEBUG
         printf("s2:i=%x ", i);
 #endif
@@ -273,6 +273,22 @@ int main()
 #endif
     ClearScreen_StandardCharacterMode(characterModeAddresses.screenDataPtr);
 
+    width_c = CHARACTER_SCREEN_WIDTH/2;
+    // triangle drawing test - standard character mode
+    for (i=0; i<(CHARACTER_SCREEN_HEIGHT/2); i++)
+    {
+        color = ++color % 16;
+        DrawTriangle_StandardCharacterMode(ch, color,                            i,                           i/2, width_c-1-(i/2), i/2,                              i, (CHARACTER_SCREEN_HEIGHT-1)-i, characterModeAddresses.screenDataPtr);
+        color = ++color % 16;
+        DrawTriangle_StandardCharacterMode(ch, color, (CHARACTER_SCREEN_WIDTH-1)-i,                           i/2, width_c+1+(i/2), i/2,   (CHARACTER_SCREEN_WIDTH-1)-i, (CHARACTER_SCREEN_HEIGHT-1)-i, characterModeAddresses.screenDataPtr);
+        color = ++color % 16;
+        DrawTriangle_StandardCharacterMode(ch, color,                          i+1, (CHARACTER_SCREEN_HEIGHT-1)-i, width_c        ,   i, (CHARACTER_SCREEN_WIDTH-1)-1-i, (CHARACTER_SCREEN_HEIGHT-1)-i, characterModeAddresses.screenDataPtr);
+    }
+#ifdef PAUSE
+    WaitUntilKeyPressed(KEY_RETURN);
+#endif
+    ClearScreen_StandardCharacterMode(characterModeAddresses.screenDataPtr);
+
     SetMode_MulticolorCharacterMode(0, 1, 2);
     // multicolor character mode testing
     for (i=0; i<26; i++)
@@ -296,17 +312,21 @@ int main()
     // standard bitmap mode testing
 #ifdef DEBUG
     printf("SetMode_StandardBitmapMode()");
-    WaitUntilKeyPressed(KEY_RETURN);
+    #ifdef PAUSE
+        WaitUntilKeyPressed(KEY_RETURN);
+    #endif
 #endif
     SetMode_StandardBitmapMode();
 #ifdef DEBUG
-    printf("GetVic2BitmapModeMemoryMappedAddresses()");
-    WaitUntilKeyPressed(KEY_RETURN);
+    #ifdef PAUSE
+        WaitUntilKeyPressed(KEY_RETURN);
+    #endif
 #endif
     GetVic2BitmapModeMemoryMappedAddresses(&bitmapModeAddresses);
 #ifdef DEBUG
-    printf("SetVic2VideoMemoryBank()");
-    WaitUntilKeyPressed(KEY_RETURN);
+    #ifdef PAUSE
+        WaitUntilKeyPressed(KEY_RETURN);
+    #endif
 #endif
 #ifdef VBCC
     bitmapModeAddresses.vic2MemoryBankPtr = SetVic2VideoMemoryBank(1);
@@ -314,8 +334,9 @@ int main()
     bitmapModeAddresses.vic2MemoryBankPtr = SetVic2VideoMemoryBank(2);
 #endif
 #ifdef DEBUG
-    printf("SetVic2BitmapModeMemoryLocations()");
-    WaitUntilKeyPressed(KEY_RETURN);
+    #ifdef PAUSE
+        WaitUntilKeyPressed(KEY_RETURN);
+    #endif
 #endif
     SetVic2BitmapModeMemoryLocations(1, 1, &bitmapModeAddresses);
 
@@ -327,7 +348,6 @@ int main()
     for (i=0; i<16; i++)
     {
         color = ++color % 16;
-        WaitUntilRasterOffscreen();
         SetScreenColor_StandardBitmapMode(color, 0, bitmapModeAddresses.colorDataPtr);
     }
 #ifdef PAUSE
@@ -339,11 +359,11 @@ int main()
     SetScreenColor_StandardBitmapMode(1, 0, bitmapModeAddresses.colorDataPtr);
 
     // line drawing tests - standard bitmap mode - originate from top-left
-    for (j=0; j<BITMAP_SCREEN_WIDTH; j++)
+    for (j=0; j<BITMAP_SCREEN_WIDTH; j+=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode(0, 0, j, BITMAP_SCREEN_HEIGHT-1, bitmapModeAddresses.bitmapDataPtr);
     }
-    for (sj=(BITMAP_SCREEN_HEIGHT-1); sj>=0; sj--)
+    for (sj=(BITMAP_SCREEN_HEIGHT-1); sj>=0; sj-=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode(0, 0, BITMAP_SCREEN_WIDTH-1, (unsigned short)sj, bitmapModeAddresses.bitmapDataPtr);
     }
@@ -353,11 +373,11 @@ int main()
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
 
     // line drawing tests - standard bitmap mode - originate from bottom-left
-    for (j=0; j<BITMAP_SCREEN_WIDTH; j++)
+    for (j=0; j<BITMAP_SCREEN_WIDTH; j+=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode(0, (BITMAP_SCREEN_HEIGHT-1), j, 0, bitmapModeAddresses.bitmapDataPtr);
     }
-    for (j=0; j<BITMAP_SCREEN_HEIGHT; j++)
+    for (j=0; j<BITMAP_SCREEN_HEIGHT; j+=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode(0, (BITMAP_SCREEN_HEIGHT-1), (BITMAP_SCREEN_WIDTH-1), j, bitmapModeAddresses.bitmapDataPtr);
     }
@@ -367,11 +387,11 @@ int main()
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
 
     // line drawing tests - standard bitmap mode - originate from bottom-right
-    for (sj=(BITMAP_SCREEN_WIDTH-1); sj>=0; sj--)
+    for (sj=(BITMAP_SCREEN_WIDTH-1); sj>=0; sj-=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode((BITMAP_SCREEN_WIDTH-1), (BITMAP_SCREEN_HEIGHT-1), (unsigned short)sj, 0, bitmapModeAddresses.bitmapDataPtr);
     }
-    for (j=0; j<BITMAP_SCREEN_HEIGHT; j++)
+    for (j=0; j<BITMAP_SCREEN_HEIGHT; j+=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode((BITMAP_SCREEN_WIDTH-1), (BITMAP_SCREEN_HEIGHT-1), 0, j, bitmapModeAddresses.bitmapDataPtr);
     }
@@ -381,11 +401,11 @@ int main()
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
 
     // line drawing tests - standard bitmap mode - originate from top-right
-    for (sj=(BITMAP_SCREEN_WIDTH-1); sj>=0; sj--)
+    for (sj=(BITMAP_SCREEN_WIDTH-1); sj>=0; sj-=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode((BITMAP_SCREEN_WIDTH-1), 0, (unsigned short)sj, (BITMAP_SCREEN_HEIGHT-1), bitmapModeAddresses.bitmapDataPtr);
     }
-    for (sj=(BITMAP_SCREEN_HEIGHT-1); sj>=0; sj--)
+    for (sj=(BITMAP_SCREEN_HEIGHT-1); sj>=0; sj-=BITMAP_TEST_STEP)
     {
         DrawLine_StandardBitmapMode((BITMAP_SCREEN_WIDTH-1), 0, 0, (unsigned short)sj, bitmapModeAddresses.bitmapDataPtr);
     }
@@ -395,7 +415,7 @@ int main()
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
 
     // rectangle drawing test - standard bitmap mode
-    for (j=0; j<(BITMAP_SCREEN_HEIGHT/2); j++)
+    for (j=0; j<(BITMAP_SCREEN_HEIGHT/2); j+=BITMAP_TEST_STEP)
     {
         width_s = (BITMAP_SCREEN_WIDTH-1) - (j*2);
         height_s = (BITMAP_SCREEN_HEIGHT-1) - (j*2);
@@ -407,7 +427,7 @@ int main()
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
 
     // circle drawing test - standard bitmap mode
-    for (j=1; j<(BITMAP_SCREEN_HEIGHT/2); j++)
+    for (j=1; j<(BITMAP_SCREEN_HEIGHT/2); j+=BITMAP_TEST_STEP)
     {
         DrawCircle_StandardBitmapMode(BITMAP_SCREEN_WIDTH/2, BITMAP_SCREEN_HEIGHT/2, j, bitmapModeAddresses.bitmapDataPtr);
     }
@@ -415,6 +435,19 @@ int main()
     WaitUntilKeyPressed(KEY_RETURN);
 #endif
     ClearScreen_StandardBitmapMode(bitmapModeAddresses.bitmapDataPtr);
+
+    width_s = BITMAP_SCREEN_WIDTH/2;
+    // triangle drawing test - standard bitmap mode
+    for (i=0; i<(BITMAP_SCREEN_HEIGHT/2); i+=BITMAP_TEST_STEP)
+    {
+        DrawTriangle_StandardBitmapMode(                        i,                        i/2, width_s-1-(i/2), i/2,                           i, (BITMAP_SCREEN_HEIGHT-1)-i, bitmapModeAddresses.bitmapDataPtr);
+        DrawTriangle_StandardBitmapMode((BITMAP_SCREEN_WIDTH-1)-i,                        i/2, width_s+1+(i/2), i/2,   (BITMAP_SCREEN_WIDTH-1)-i, (BITMAP_SCREEN_HEIGHT-1)-i, bitmapModeAddresses.bitmapDataPtr);
+        DrawTriangle_StandardBitmapMode(                      i+1, (BITMAP_SCREEN_HEIGHT-1)-i, width_s        ,   i, (BITMAP_SCREEN_WIDTH-1)-1-i, (BITMAP_SCREEN_HEIGHT-1)-i, bitmapModeAddresses.bitmapDataPtr);
+    }
+#ifdef PAUSE
+    WaitUntilKeyPressed(KEY_RETURN);
+#endif
+    ClearScreen_StandardCharacterMode(characterModeAddresses.screenDataPtr);
 
     SetMode_StandardCharacterMode(BLACK);
     ClearScreen_StandardCharacterMode(characterModeAddresses.screenDataPtr);
