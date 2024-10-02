@@ -29,8 +29,8 @@ if "%build_kickc%"=="y" (
 
     IF EXIST %BUILD_NAME%.prg del /F /Q %BUILD_NAME%.prg
     cd /D %KICKC_PATH%
-    echo kickc.bat %KICKC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
-    call kickc.bat %KICKC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+    echo kickc.bat %KICKC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+    call kickc.bat %KICKC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
     cd /D %BASEPATH%
     IF EXIST %BUILD_NAME%.prg %VICEBIN%\x64sc.exe %VICEOPTS% %BUILD_NAME%.prg
 )
@@ -53,8 +53,8 @@ if "%build_vbcc%"=="y" (
     IF EXIST %BUILD_NAME%.prg del /F /Q %BUILD_NAME%.prg
     cd /D %VBCC_PATH%
     copy ..\config\c64 .
-    echo vc.exe %VBCC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
-         vc.exe %VBCC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+    echo vc.exe %VBCC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+         vc.exe %VBCC_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
     del c64
     cd /D %BASEPATH%
     IF EXIST %BUILD_NAME%.prg %VICEBIN%\x64sc.exe %VICEOPTS% %BUILD_NAME%.prg
@@ -75,8 +75,8 @@ if "%build_cc65%"=="y" (
 
     IF EXIST %BUILD_NAME%.prg del /F /Q %BUILD_NAME%.prg
     cd /D %CC65_PATH%
-    echo cl65.exe %CC65_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
-         cl65.exe %CC65_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+    echo cl65.exe %CC65_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+         cl65.exe %CC65_OPTS% -o %BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
     cd /D %BASEPATH%
     IF EXIST %BUILD_NAME%.prg %VICEBIN%\x64sc.exe %VICEOPTS% %BUILD_NAME%.prg
 )
@@ -110,6 +110,8 @@ if "%build_sdcc%"=="y" (
 
     echo sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-graphics.c
          sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-graphics.c
+    echo sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-charset.c
+         sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-charset.c
     echo sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-util.c
          sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\c64-util.c
     echo sdcc.exe %SDCC_OPTIONS% %SDCC_OPTIMIZE% %BASEPATH%\%GAME_SOURCE_NAME%.c
@@ -137,8 +139,8 @@ if "%build_oscar64%"=="y" (
 
     IF EXIST %BUILD_NAME%.prg del /F /Q %BUILD_NAME%.prg
     cd /D %OSCAR64_PATH%
-    echo oscar64.exe %OSCAR64_OPTIONS% -o=%BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
-         oscar64.exe %OSCAR64_OPTIONS% -o=%BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+    echo oscar64.exe %OSCAR64_OPTIONS% -o=%BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
+         oscar64.exe %OSCAR64_OPTIONS% -o=%BASEPATH%\%BUILD_NAME%.prg %BASEPATH%\c64-graphics.c %BASEPATH%\c64-charset.c %BASEPATH%\c64-util.c %BASEPATH%\%GAME_SOURCE_NAME%.c
     cd /D %BASEPATH%
     IF EXIST %BUILD_NAME%.prg %VICEBIN%\x64sc.exe %VICEOPTS% %BUILD_NAME%.prg
 )

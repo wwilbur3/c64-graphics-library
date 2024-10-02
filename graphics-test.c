@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include "c64-graphics.h"
+#include "c64-charset.h"
 #include "c64-util.h"
 
 // Wait until the user presses <RETURN> after each drawing test
@@ -54,7 +55,7 @@
 //#define TEST_SAFE_DRAW
 
 // Faster bitmap testing, increase loop increment value to not draw every line (e.g. two to draw every other line)
-#define BITMAP_TEST_STEP 5
+#define BITMAP_TEST_STEP 20
 
 int main()
 {
@@ -63,7 +64,7 @@ int main()
     unsigned char color = 0;
     unsigned char color2;
     unsigned char color3;
-    char ch = 0;
+    char ch = 65; //Use PETSCII screen code 65 ('A')
     unsigned char i = 0;
     signed char si;
     unsigned char width_c;
@@ -73,15 +74,8 @@ int main()
     unsigned short width_s;
     unsigned short height_s;
 
-#ifdef KICKC
-    keyboard_init();
-#endif
+    SetCharacterSetAddressIndex(C64_UPPERLOWERCASE_CHARACTER_SET_ADDRESS_INDEX);
 
-#ifdef OSCAR64
-    ch = 65; //Use PETSCII code 65 ('A')
-#else
-    ch = 'a'; //Use ASCII code 'a' (which equals PETSCII code 'A')
-#endif
 #ifdef OSCAR64
     //switch to the lowercase PETSCII font while printing (via printf)
     iocharmap(IOCHM_PETSCII_2);
@@ -94,6 +88,9 @@ int main()
     }
 #ifdef PAUSE
     printf("      press return after each test");
+#ifdef KICKC
+    keyboard_init();
+#endif
     WaitUntilKeyPressed(KEY_RETURN);
 #endif
 
@@ -113,11 +110,7 @@ int main()
     // screen fill test - standard character mode
     for (i=0; i<26; i++)
     {
-#ifdef OSCAR64
         ch = 65 + i; //Use PETSCII screen code 65 ('A')
-#else
-        ch = 'a' + i; //Use ASCII code 'a' (which equals PETSCII code 'A')
-#endif
 #ifdef DEBUG
         printf("s1:i=%x, char=%c ", i, ch);
 #endif
@@ -140,11 +133,7 @@ int main()
 #endif
 
     // line drawing tests - standard character mode
-#ifdef OSCAR64
     ch = 65; //Use PETSCII screen code 65 ('A')
-#else
-    ch = 'a'; //Use ASCII code 'a' (which equals PETSCII code 'A')
-#endif
     FillScreen_StandardCharacterMode(ch, characterModeAddresses.screenDataPtr);
     SetScreenForegroundColor_StandardCharacterMode(1);
     // line drawing tests 1 - standard character mode - originate from top-left
@@ -296,11 +285,7 @@ int main()
         color = ++color % 16;
         color2 = (color+1) % 16;
         color3 = (color+2) % 16;
-#ifdef OSCAR64
         ch = 65 + i; //Use PETSCII screen code 65 ('A')
-#else
-        ch = 'a' + i; //Use ASCII code 'a' (which equals PETSCII code 'A')
-#endif
         SetScreenBackgroundColors_MulticolorCharacterMode(color, color2, color3);
         FillScreen_StandardCharacterMode(ch, characterModeAddresses.screenDataPtr);
     }
