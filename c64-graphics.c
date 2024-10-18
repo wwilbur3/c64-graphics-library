@@ -22,10 +22,6 @@
 #include "c64-graphics.h"
 
 #include <string.h>
-#ifdef DEBUG
-    #include <printf.h>
-#endif
-
 #ifndef KICKC
     // For portability we will define c64 memory locations here
     #define VICII_MEMORY   ((unsigned char* const)0xd018)
@@ -45,6 +41,9 @@
 
 // Print troubleshooting information for each line
 //#define DEBUG
+#ifdef DEBUG
+    #include <printf.h>
+#endif
 
 // Determines if drawing routines will truncate drawing outside the screen
 // space (useful if you want to draw lines, rectangles, circles that are only
@@ -169,7 +168,7 @@ void SetVic2BitmapModeMemoryLocations(
         // [in] ptr to BitmapModeMemoryMappedAddresses struct, will set bitmapDataPtr and colorDataPtr values
         BitmapModeMemoryMappedAddresses_t *memoryMappedAddressesPtr)
 {
-    *(unsigned char*)VICII_MEMORY = (colorDataIndex << 4) | (bitmapDataIndex << 3);
+    *VICII_MEMORY = (colorDataIndex << 4) | (bitmapDataIndex << 3);
     memoryMappedAddressesPtr->bitmapDataPtr = memoryMappedAddressesPtr->vic2MemoryBankPtr + (unsigned short)bitmapDataIndex*8192;
     memoryMappedAddressesPtr->colorDataPtr = memoryMappedAddressesPtr->vic2MemoryBankPtr + (unsigned short)colorDataIndex*1024;
 }

@@ -19,155 +19,57 @@
  * IN THE SOFTWARE.
  */
 
+#include <string.h>
+
 #ifdef KICKC
  #include <c64.h>
+#else
+ #define SPRITES_XPOS     ((unsigned char*)0xd000)
+ #define SPRITES_YPOS     ((unsigned char*)0xd001)
+ #define SPRITES_XMSB     ((unsigned char*)0xd010)
+ #define SPRITES_ENABLE   ((unsigned char*)0xd015)
+ #define SPRITES_EXPAND_Y ((unsigned char*)0xd017)
+ #define SPRITES_PRIORITY ((unsigned char*)0xd01B)
+ #define SPRITES_MC       ((unsigned char*)0xd01C)
+ #define SPRITES_EXPAND_X ((unsigned char*)0xd01D)
+ #define SPRITES_COLOR    ((unsigned char*)0xd027)
+#endif
+#define SPRITES_MCOLOR1  ((unsigned char*)0xd025)
+#define SPRITES_MCOLOR2  ((unsigned char*)0xd026)
+
+#define SPRITE_BYTE_HEIGHT 21
+#define SPRITE_BYTE_WIDTH  3
+
+// Print troubleshooting information for each line
+//#define DEBUG
+#ifdef DEBUG
+    #include <printf.h>
 #endif
 
-void MakeSingleColorSprite(
+void ColorSprite(
     // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
-    byte* dataPtr,
+    unsigned char index,
     // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte color,
-    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
-    // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y,
-    // [in] double sprite width (each pixel is expanded to two pixels)
-    bool expandHorizontal,
-    // [in] double sprite height (each pixel is expanded to two pixels)
-    bool expandVertical,
-    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
-    unsigned char *spriteDataPtrs)
+    unsigned char color)
 {
-    unsigned byte indexBit = (unsigned byte)%00000001 << index;
-    VICII->SPRITES_ENABLE = VICII->SPRITES_ENABLE | indexBit;
-
-    if (expandHorizontal)
-    {
-        VICII->SPRITES_EXPAND_X = VICII->SPRITES_EXPAND_X | indexBit;
-    }
-    else
-    {
-        VICII->SPRITES_EXPAND_X = VICII->SPRITES_EXPAND_X & (~indexBit);
-    }
-
-    if (expandVertical)
-    {
-        VICII->SPRITES_EXPAND_Y = VICII->SPRITES_EXPAND_Y | indexBit;
-    }
-    else
-    {
-        VICII->SPRITES_EXPAND_Y = VICII->SPRITES_EXPAND_Y & (~indexBit);
-    }
-
-    VICII->SPRITES_MC = VICII->SPRITES_MC & (~indexBit);
-
-    SpriteFrameUpdate(index, dataPtr, spriteDataPtrs);
-    ColorSprite(index, color);
-    MoveSprite(index, x, y);
-}
-
-void SpriteFrameUpdate(
-    // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] pointer to sprite data
-    byte *dataPtr,
-    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
-    unsigned char *spriteDataPtrs)
-{
-    byte spr_id = (byte)((word)dataPtr/64);
-    spriteDataPtrs[index] = spr_id;
-}
-
-void MakeMultiColorSprite(
-    // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 3x21 byte array
-    byte* dataPtr,
-    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte spriteColor,
-    // [in] sprite common color #1 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte commonColor1,
-    // [in] sprite common color #2 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte commonColor2,
-    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
-    // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y,
-    // [in] double sprite width (each pixel is expanded to two pixels)
-    bool expandHorizontal,
-    // [in] double sprite height (each pixel is expanded to two pixels)
-    bool expandVertical,
-    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
-    unsigned char *spriteDataPtrs)
-{
-    unsigned byte indexBit = (unsigned byte)%00000001 << index;
-    VICII->SPRITES_ENABLE = VICII->SPRITES_ENABLE | indexBit;
-
-    if (expandHorizontal)
-    {
-        VICII->SPRITES_EXPAND_X = VICII->SPRITES_EXPAND_X | indexBit;
-    }
-    else
-    {
-        VICII->SPRITES_EXPAND_X = VICII->SPRITES_EXPAND_X & (~indexBit);
-    }
-
-    if (expandVertical)
-    {
-        VICII->SPRITES_EXPAND_Y = VICII->SPRITES_EXPAND_Y | indexBit;
-    }
-    else
-    {
-        VICII->SPRITES_EXPAND_Y = VICII->SPRITES_EXPAND_Y & (~indexBit);
-    }
-
-    VICII->SPRITES_MC = VICII->SPRITES_MC | indexBit;
-
-    SpriteFrameUpdate(index, dataPtr, spriteDataPtrs);
-    ColorSprite(index, spriteColor);
-    VICII->SPRITES_MCOLOR1 = commonColor1;
-    VICII->SPRITES_MCOLOR2 = commonColor2;
-    MoveSprite(index, x, y);
-}
-
-void RemoveSprite(
-    // [in] sprite index is a number between 0 - 7
-    byte index)
-{
-    unsigned byte indexBit = (unsigned byte)%00000001 << index;
-    VICII->SPRITES_ENABLE = VICII->SPRITES_ENABLE & (~indexBit);
-}
-
-void SpritePriority(
-    // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] if true then put sprite behind background
-    bool behindBackground)
-{
-    unsigned byte indexBit = (unsigned byte)%00000001 << index;
-    if (behindBackground)
-    {
-        VICII->SPRITES_PRIORITY = VICII->SPRITES_PRIORITY | indexBit;
-    }
-    else //in front of background
-    {
-        VICII->SPRITES_PRIORITY = VICII->SPRITES_PRIORITY & (~indexBit);
-    }
+    SPRITES_COLOR[index] = color;
 }
 
 void MoveSprite(
     // [in] sprite index is a number between 0 - 7
-    byte index,
+    unsigned char index,
     // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
+    unsigned short x,
     // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y)
+    unsigned short y)
 {
-    unsigned byte x_msb = VICII->SPRITES_XMSB;
-    unsigned byte x_bit = (unsigned byte)%00000001 << index;
+    unsigned char x_msb;
+    unsigned char x_bit;
+    unsigned char x_byte;
+    unsigned char y_byte;
+
+    x_msb = *SPRITES_XMSB;
+    x_bit = (unsigned char)0x01 << index;
 
     if (x >= 255)
     {
@@ -179,55 +81,195 @@ void MoveSprite(
         x_msb = x_msb & (~x_bit);
     }
 
-    unsigned byte x_byte = (unsigned byte)x;
+    x_byte = (unsigned char)x;
     SPRITES_XPOS[index*2] = x_byte;
-    unsigned byte y_byte = (unsigned byte)y;
+    y_byte = (unsigned char)y;
     SPRITES_YPOS[index*2] = y_byte;
 
-    VICII->SPRITES_XMSB = x_msb;
+    *SPRITES_XMSB = x_msb;
 
 #ifdef DEBUG
     print_uchar_pos(x_byte, 1, 0);
     print_uchar_pos(x_msb, 2, 0);
-    print_uchar_pos((unsigned byte)(x >> 8), 3, 0);
-    print_uchar_pos((unsigned byte)x, 3, 2);
-    print_uchar_pos((unsigned byte)y, 3, 5);
+    print_uchar_pos((unsigned char)(x >> 8), 3, 0);
+    print_uchar_pos((unsigned char)x, 3, 2);
+    print_uchar_pos((unsigned char)y, 3, 5);
 #endif //DEBUG
 }
 
-void ColorSprite(
+void SpriteFrameUpdate(
     // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte color)
+    unsigned char index,
+    // [in] pointer to sprite data
+    unsigned char *dataPtr,
+    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
+    unsigned char *spriteDataPtrs)
 {
-    SPRITES_COLOR[index] = color;
+    unsigned char spr_id;
+
+    spr_id = (unsigned char)((short)dataPtr/64);
+    spriteDataPtrs[index] = spr_id;
 }
 
-/* Multi-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
- * we will need to swap the bytes in each row left <-> right and then reverse the order of two-bit pairs in each byte. */
-void ReverseMulticolorSprite(
-    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 3x21 byte array
-    byte *spritePtr)
+void MakeSingleColorSprite(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index,
+    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
+    unsigned char *dataPtr,
+    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
+    unsigned char color,
+    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
+    unsigned short x,
+    // [in] sprite position vertical is a number between 0 - 200
+    unsigned short y,
+    // [in] if non-zero (true) then double sprite width (each pixel is expanded to two pixels)
+    unsigned char expandHorizontal,
+    // [in] if non-zero (true) then double sprite height (each pixel is expanded to two pixels)
+    unsigned char expandVertical,
+    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
+    unsigned char *spriteDataPtrs)
 {
-    for (byte i=0; i<21; i++)
-    {
-        byte tmpLeft = spritePtr[i*3];
-        byte tmpMiddle = spritePtr[i*3+1];
-        byte tmpRight = spritePtr[i*3+2];
+    unsigned char indexBit;
 
-        spritePtr[i*3] = ReverseByteByTwoBitPairs(tmpRight);
-        spritePtr[i*3+1] = ReverseByteByTwoBitPairs(tmpMiddle);
-        spritePtr[i*3+2] = ReverseByteByTwoBitPairs(tmpLeft);
+    indexBit = (unsigned char)0x01 << index;
+    *SPRITES_ENABLE = *SPRITES_ENABLE | indexBit;
+
+    if (expandHorizontal)
+    {
+        *SPRITES_EXPAND_X = *SPRITES_EXPAND_X | indexBit;
+    }
+    else
+    {
+        *SPRITES_EXPAND_X = *SPRITES_EXPAND_X & (~indexBit);
+    }
+
+    if (expandVertical)
+    {
+        *SPRITES_EXPAND_Y = *SPRITES_EXPAND_Y | indexBit;
+    }
+    else
+    {
+        *SPRITES_EXPAND_Y = *SPRITES_EXPAND_Y & (~indexBit);
+    }
+
+    *SPRITES_MC = *SPRITES_MC & (~indexBit);
+
+    SpriteFrameUpdate(index, dataPtr, spriteDataPtrs);
+    ColorSprite(index, color);
+    MoveSprite(index, x, y);
+}
+
+void MakeMultiColorSprite(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index,
+    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 3x21 byte array
+    unsigned char *dataPtr,
+    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
+    unsigned char spriteColor,
+    // [in] sprite common color #1 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
+    unsigned char commonColor1,
+    // [in] sprite common color #2 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
+    unsigned char commonColor2,
+    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
+    unsigned short x,
+    // [in] sprite position vertical is a number between 0 - 200
+    unsigned short y,
+    // [in] if non-zero (true) then double sprite width (each pixel is expanded to two pixels)
+    unsigned char expandHorizontal,
+    // [in] if non-zero (true) then double sprite height (each pixel is expanded to two pixels)
+    unsigned char expandVertical,
+    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
+    unsigned char *spriteDataPtrs)
+{
+    unsigned char indexBit;
+
+    indexBit = (unsigned char)0x01 << index;
+    *SPRITES_ENABLE = *SPRITES_ENABLE | indexBit;
+
+    if (expandHorizontal)
+    {
+        *SPRITES_EXPAND_X = *SPRITES_EXPAND_X | indexBit;
+    }
+    else
+    {
+        *SPRITES_EXPAND_X = *SPRITES_EXPAND_X & (~indexBit);
+    }
+
+    if (expandVertical)
+    {
+        *SPRITES_EXPAND_Y = *SPRITES_EXPAND_Y | indexBit;
+    }
+    else
+    {
+        *SPRITES_EXPAND_Y = *SPRITES_EXPAND_Y & (~indexBit);
+    }
+
+    *SPRITES_MC = *SPRITES_MC | indexBit;
+
+    SpriteFrameUpdate(index, dataPtr, spriteDataPtrs);
+    ColorSprite(index, spriteColor);
+    *SPRITES_MCOLOR1 = commonColor1;
+    *SPRITES_MCOLOR2 = commonColor2;
+    MoveSprite(index, x, y);
+}
+
+void RemoveSprite(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index)
+{
+    unsigned char indexBit;
+
+    indexBit = (unsigned char)0x01 << index;
+    *SPRITES_ENABLE = *SPRITES_ENABLE & (~indexBit);
+}
+
+void SpritePriority(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index,
+    // [in] if non-zero (true) then put sprite behind background
+    unsigned char behindBackground)
+{
+    unsigned char indexBit;
+
+    indexBit = (unsigned char)0x01 << index;
+    if (behindBackground)
+    {
+        *SPRITES_PRIORITY = *SPRITES_PRIORITY | indexBit;
+    }
+    else //in front of background
+    {
+        *SPRITES_PRIORITY = *SPRITES_PRIORITY & (~indexBit);
+    }
+}
+
+/* Sprites consist of 21 rows of 3 bytes each. To reverse the sprite vertically we will need to swap the top <-> bottom lines in turn. */
+void ReverseVerticalSprite(
+    // [in] pointer to sprite data in a 21x3 byte array
+    unsigned char *spritePtr)
+{
+    unsigned char i;
+    unsigned char tmpTopLine[SPRITE_BYTE_WIDTH];
+    unsigned char topLineIndex;
+    unsigned char bottomLineIndex;
+
+    for (i=0; i<SPRITE_BYTE_HEIGHT/2; i++)
+    {
+        topLineIndex = i*SPRITE_BYTE_WIDTH;
+        bottomLineIndex = (SPRITE_BYTE_HEIGHT*SPRITE_BYTE_WIDTH)-((i+1)*SPRITE_BYTE_WIDTH);
+        memcpy(tmpTopLine, &spritePtr[topLineIndex], SPRITE_BYTE_WIDTH);
+        memcpy(&spritePtr[topLineIndex], &spritePtr[bottomLineIndex], SPRITE_BYTE_WIDTH);
+        memcpy(&spritePtr[bottomLineIndex], tmpTopLine, SPRITE_BYTE_WIDTH);
     }
 }
 
 /* Each multicolor sprite pixel consists of a 2 bit encoding of either 00, 01, or 11. 
  * These two bit pairs must be preserved as they are moved */
-byte ReverseByteByTwoBitPairs(
-    byte input)
+unsigned char ReverseByteByTwoBitPairs(
+    unsigned char input)
 {
-    byte output = 0;
+    unsigned char output;
+
+    output = 0;
     output |= ((input & 0xC0) >> 6);
     output |= ((input & 0x30) >> 2);
     output |= ((input & 0x0C) << 2);
@@ -235,28 +277,32 @@ byte ReverseByteByTwoBitPairs(
     return output;
 }
 
-/* Single-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
- * we will need to swap each row left <-> right and then reverse each byte. */
-void ReverseSinglecolorSprite(
-    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
-    byte *spritePtr)
+/* Multi-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
+ * we will need to swap the bytes in each row left <-> right and then reverse the order of two-bit pairs in each byte. */
+void ReverseHorizontalMulticolorSprite(
+    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 21x3 byte array
+    unsigned char *spritePtr)
 {
-    for (byte i=0; i<21; i++)
-    {
-        byte tmpLeft = spritePtr[i*3];
-        byte tmpMiddle = spritePtr[i*3+1];
-        byte tmpRight = spritePtr[i*3+2];
+    unsigned char i;
 
-        spritePtr[i*3] = ReverseByteBitwise(tmpRight);
-        spritePtr[i*3+1] = ReverseByteBitwise(tmpMiddle);
-        spritePtr[i*3+2] = ReverseByteBitwise(tmpLeft);
+    for (i=0; i<SPRITE_BYTE_HEIGHT; i++)
+    {
+        unsigned char tmpLeft   = spritePtr[i*SPRITE_BYTE_WIDTH];
+        unsigned char tmpMiddle = spritePtr[i*SPRITE_BYTE_WIDTH+1];
+        unsigned char tmpRight  = spritePtr[i*SPRITE_BYTE_WIDTH+2];
+
+        spritePtr[i*SPRITE_BYTE_WIDTH]   = ReverseByteByTwoBitPairs(tmpRight);
+        spritePtr[i*SPRITE_BYTE_WIDTH+1] = ReverseByteByTwoBitPairs(tmpMiddle);
+        spritePtr[i*SPRITE_BYTE_WIDTH+2] = ReverseByteByTwoBitPairs(tmpLeft);
     }
 }
 
-byte ReverseByteBitwise(
-    byte input)
+unsigned char ReverseByteBitwise(
+    unsigned char input)
 {
-    byte output = 0;
+    unsigned char output;
+
+    output = 0;
     output |= ((input & 0x80) >> 7);
     output |= ((input & 0x40) >> 5);
     output |= ((input & 0x20) >> 3);
@@ -266,5 +312,25 @@ byte ReverseByteBitwise(
     output |= ((input & 0x02) << 5);
     output |= ((input & 0x01) << 7);
     return output;
+}
+
+/* Single-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
+ * we will need to swap each row left <-> right and then reverse each byte. */
+void ReverseHorizontalSinglecolorSprite(
+    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 21x3 byte array
+    unsigned char *spritePtr)
+{
+    unsigned char i;
+
+    for (i=0; i<SPRITE_BYTE_HEIGHT; i++)
+    {
+        unsigned char tmpLeft   = spritePtr[i*SPRITE_BYTE_WIDTH];
+        unsigned char tmpMiddle = spritePtr[i*SPRITE_BYTE_WIDTH+1];
+        unsigned char tmpRight  = spritePtr[i*SPRITE_BYTE_WIDTH+2];
+
+        spritePtr[i*SPRITE_BYTE_WIDTH]   = ReverseByteBitwise(tmpRight);
+        spritePtr[i*SPRITE_BYTE_WIDTH+1] = ReverseByteBitwise(tmpMiddle);
+        spritePtr[i*SPRITE_BYTE_WIDTH+2] = ReverseByteBitwise(tmpLeft);
+    }
 }
 

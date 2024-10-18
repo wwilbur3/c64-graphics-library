@@ -22,89 +22,89 @@
 #ifndef C64_SPRITES_H
 #define C64_SPRITES_H
 
-void MakeSingleColorSprite(
+void ColorSprite(
     // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
-    byte* dataPtr,
+    unsigned char index,
     // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte color,
+    unsigned char color);
+
+void MoveSprite(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index,
     // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
+    unsigned short x,
     // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y,
-    // [in] double sprite width (each pixel is expanded to two pixels)
-    bool expandHorizontal,
-    // [in] double sprite height (each pixel is expanded to two pixels)
-    bool expandVertical,
-    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
-    unsigned char *spriteDataPtrs);
+    unsigned short y);
 
 void SpriteFrameUpdate(
     // [in] sprite index is a number between 0 - 7
-    byte index,
+    unsigned char index,
     // [in] pointer to sprite data
-    byte *dataPtr,
+    unsigned char *dataPtr,
+    // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
+    unsigned char *spriteDataPtrs);
+
+void MakeSingleColorSprite(
+    // [in] sprite index is a number between 0 - 7
+    unsigned char index,
+    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
+    unsigned char* dataPtr,
+    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
+    unsigned char color,
+    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
+    unsigned short x,
+    // [in] sprite position vertical is a number between 0 - 200
+    unsigned short y,
+    // [in] non-zero (true) to double sprite width (each pixel is expanded to two pixels)
+    unsigned char expandHorizontal,
+    // [in] non-zero (true) to double sprite height (each pixel is expanded to two pixels)
+    unsigned char expandVertical,
     // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
     unsigned char *spriteDataPtrs);
 
 void MakeMultiColorSprite(
     // [in] sprite index is a number between 0 - 7
-    byte index,
+    unsigned char index,
     // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 3x21 byte array
-    byte* dataPtr,
+    unsigned char *dataPtr,
     // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte spriteColor,
+    unsigned char spriteColor,
     // [in] sprite common color #1 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte commonColor1,
+    unsigned char commonColor1,
     // [in] sprite common color #2 is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte commonColor2,
+    unsigned char commonColor2,
     // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
+    unsigned short x,
     // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y,
-    // [in] double sprite width (each pixel is expanded to two pixels)
-    bool expandHorizontal,
-    // [in] double sprite height (each pixel is expanded to two pixels)
-    bool expandVertical,
+    unsigned short y,
+    // [in] non-zero (true) to double sprite width (each pixel is expanded to two pixels)
+    unsigned char expandHorizontal,
+    // [in] non-zero (true) to double sprite height (each pixel is expanded to two pixels)
+    unsigned char expandVertical,
     // [in] VIC-II sprite data pointers to support the 8 VIC-II sprites
     unsigned char *spriteDataPtrs);
 
 void RemoveSprite(
     // [in] sprite index is a number between 0 - 7
-    byte index);
+    unsigned char index);
 
 void SpritePriority(
     // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] if true then put sprite behind background
-    bool behindBackground);
+    unsigned char index,
+    // [in] if non-zero (true) then put sprite behind background
+    unsigned char behindBackground);
 
-void MoveSprite(
-    // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] sprite position horizontal is a number between 0 - 160 or 0 - 320 depending on the screen mode
-    unsigned word x,
-    // [in] sprite position vertical is a number between 0 - 200
-    unsigned word y);
+void ReverseVerticalSprite(
+    // [in] pointer to sprite data in a 21x3 byte array
+    unsigned char *spritePtr);
 
-void ColorSprite(
-    // [in] sprite index is a number between 0 - 7
-    byte index,
-    // [in] sprite color is a number between 0 - 15 (use the color constants in kickc/include/c64.h to improve readability)
-    byte color);
+void ReverseHorizontalMulticolorSprite(
+    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 21x3 byte array
+    unsigned char *spritePtr);
 
-/* Multi-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
- * we will need to swap the bytes in each row left <-> right and then reverse the order of two-bit pairs in each byte. */
-void ReverseMulticolorSprite(
-    // [in] pointer to sprite data encoded as a multicolor sprite (12x21 pixels) in a 3x21 byte array
-    byte *spritePtr);
-
-/* Single-color sprites consist of 21 rows of 3 bytes each. To reverse them horizontally 
- * we will need to swap each row left <-> right and then reverse each byte. */
-void ReverseSinglecolorSprite(
-    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 3x21 byte array
-    byte *spritePtr);
+void ReverseHorizontalSinglecolorSprite(
+    // [in] pointer to sprite data encoded as a high resolution sprite (24x21 pixels) in a 21x3 byte array
+    unsigned char *spritePtr);
 
 #endif //C64_SPRITES_H
 
