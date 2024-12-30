@@ -47,11 +47,13 @@
 #define CHARACTER_SCREEN_WIDTH 40
 #define CHARACTER_SCREEN_HEIGHT 25
 
-// constants for C64 bitmap modes
-#define BITMAP_SCREEN_WIDTH 320
-#define BITMAP_SCREEN_HEIGHT 200
-#define BITMAP_SCREEN_CELL_WIDTH 40
-#define BITMAP_SCREEN_CELL_HEIGHT 25
+// constants for C64 standard bitmap mode
+#define STANDARD_BITMAP_SCREEN_WIDTH 320
+#define STANDARD_BITMAP_SCREEN_HEIGHT 200
+
+// constants for C64 multicolor bitmap mode
+#define MULTICOLOR_BITMAP_SCREEN_WIDTH 160
+#define MULTICOLOR_BITMAP_SCREEN_HEIGHT 200
 
 
 /** Determines if drawing routines will truncate drawing outside the screen space (useful if you want to draw lines, rectangles,
@@ -292,7 +294,6 @@ void DrawTriangle_StandardCharacterMode(
         // [in] screenDataPtr from CharacterModeMemoryMappedAddresses_t
         unsigned char* screenDataPtr);
 
-// Bresenham's Circle Algorithm: http://members.chello.at/%7Eeasyfilter/Bresenham.pdf
 void DrawCircle_StandardCharacterMode(
         // [in] PETSCII code of the character to draw
         char ch,
@@ -513,13 +514,122 @@ void DrawCircle_StandardBitmapMode(
         // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
         unsigned char *bitmapDataPtr);
 
-/** Multicolor Bitmap Mode */
+/** Multicolor Bitmap Mode
+ *
+ * Use SetCellColor_StandardBitmapMode(foregroundColor1, foregroundColor2, ...)/SetScreenColor_StandardBitmapMode(foregroundColor1, foregroundColor2, ...) and
+ *     SetCharForegroundColor_StandardCharacterMode(foregroundColor3)/SetScreenForegroundColor_StandardCharacterMode(foregroundColor3) to set the foreground colors for each 8x8 cell.
+ * Use SetScreenBackgroundColor_StandardCharacterMode(backgroundColor) to set the background color.
+ * Use ClearScreen_StandardBitmapMode() to clear the screen. */
 
 void SetMode_MulticolorBitmapMode(
         // [in] background color is a number between 0-15 (use the color constants in c64.h to improve readability)
         unsigned char backgroundColor);
 
-void ClearScreen_MulticolorBitmapMode(void);
+void FillScreen_MulticolorBitmapMode(
+        // [in] byte containing four separate individual two bit patterns for color. Two-bit patterns can be alternated for shading (%00=background color, %01=foreground color1, %10=foreground color2, and %11=foreground color3). For solid colors use: %00000000=0x00=solid background color, %=01010101=0x55=solid foreground color1, %10101010=0xAA=solid foreground color2, and %11111111=0xFF=solid foreground color3
+        unsigned char bitPatternsFullByte,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawPixel_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] pixel column index, a number between 0-159
+        unsigned short x,
+        // [in] pixel row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void ClearPixel_MulticolorBitmapMode(
+        // [in] column index, a number between 0-159
+        unsigned short x,
+        // [in] row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] ending column index, a number between 0-159
+        unsigned short x1,
+        // [in] ending row index, a number between 0-199
+        unsigned short y1,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawHorizontalLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] ending column index, a number between 0-159
+        unsigned short x1,
+        // [in] row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawVerticalLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index, a number between 0-159
+        unsigned short x,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] ending row index, a number between 0-199
+        unsigned short y1,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawRectangle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of top left corner of rectangle, a number between 0-159
+        unsigned short x,
+        // [in] row index of top left corner of rectangle, a number between 0-199
+        unsigned short y,
+        // [in] column width of rectangle, a number between 0-159 (must be on screen)
+        unsigned short width,
+        // [in] row height of rectangle, a number between 0-199 (must be on screen)
+        unsigned short height,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawTriangle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x1,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y1,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x2,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y2,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x3,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y4,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
+
+void DrawCircle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of the center of the circle, a number between 0-159
+        unsigned short x0,
+        // [in] row index of the center of the circle, a number between 0-199
+        unsigned short y0,
+        // [in] radius of circle
+        unsigned short radius,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr);
 
 #endif //C64_GRAPHICS_H
 

@@ -39,6 +39,10 @@
     #define COLORRAM       ((unsigned char* const)0xd800)
 #endif
 
+#define BITMAP_SCREEN_SIZE_IN_BYTES    8000
+#define COLOR_MEMORY_SIZE_IN_BYTES     1000
+#define CHARACTER_MEMORY_SIZE_IN_BYTES 1000
+
 // Print troubleshooting information for each line
 //#define DEBUG
 #ifdef DEBUG
@@ -201,7 +205,7 @@ void SetScreenForegroundColor_StandardCharacterMode(
         // [in] text foreground color is a number between 0-15 (use the color constants in c64.h to improve readability)
         unsigned char foregroundColor)
 {
-    memset(COLORRAM, foregroundColor, 1000);
+    memset(COLORRAM, foregroundColor, COLOR_MEMORY_SIZE_IN_BYTES);
 }
 
 void SetScreenBackgroundColor_StandardCharacterMode(
@@ -217,7 +221,7 @@ void FillScreen_StandardCharacterMode(
         // [in] screenDataPtr from CharacterModeMemoryMappedAddresses_t
         unsigned char* screenDataPtr)
 {
-    memset(screenDataPtr, ch, 1000);
+    memset(screenDataPtr, ch, CHARACTER_MEMORY_SIZE_IN_BYTES);
 }
 
 void ClearScreen_StandardCharacterMode(
@@ -672,35 +676,7 @@ void DrawCircle_StandardCharacterMode(
     } while (x < 0);
 }
 
-/** Multicolor Character Mode
- *
- * Use *_StandardCharacterMode routines but ensure that foreground color has always has high (i.e. 0x08) bit set
- * for multicolor character mode. This means that the only foreground color codes that can be used in multicolor
- * mode are:
- *
- * 0x08 = multicolor mode BLACK
- * 0x09 = multicolor mode WHITE
- * 0x0A = multicolor mode RED
- * 0x0B = multicolor mode CYAN
- * 0x0C = multicolor mode PURPLE
- * 0x0D = multicolor mode GREEN
- * 0x0E = multicolor mode BLUE
- * 0x0F = multicolor mode YELLOW
- *
- * If the high bit (0x08) isn't set in the foreground color then the character is drawn by the VIC-II chip in
- * standard character mode (thus you can mix standard and multicolor mode characters on the screen, but with a
- * limited foreground color palette):
- *
- * 0x01 = standard mode BLACK
- * 0x02 = standard mode WHITE
- * 0x03 = standard mode RED
- * 0x04 = standard mode CYAN
- * 0x05 = standard mode PURPLE
- * 0x06 = standard mode GREEN
- * 0x07 = standard mode BLUE
- * 
- * The three background colors can be chosen from the entire C64 color palette.
- */
+/** Multicolor Character Mode */
 
 void SetMode_MulticolorCharacterMode(
         // [in] background color is a number between 0-15 (use the color constants in c64.h to improve readability)
@@ -815,21 +791,21 @@ void SetScreenColor_StandardBitmapMode(
         unsigned char *colorDataPtr)
 {
     unsigned char color = (foregroundColor << 4) | backgroundColor;
-    memset(colorDataPtr, color, 1000);
+    memset(colorDataPtr, color, COLOR_MEMORY_SIZE_IN_BYTES);
 }
 
 void FillScreen_StandardBitmapMode(
         // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
         unsigned char *bitmapDataPtr)
 {
-    memset(bitmapDataPtr, 0xff, 8000);
+    memset(bitmapDataPtr, 0xff, BITMAP_SCREEN_SIZE_IN_BYTES);
 }
 
 void ClearScreen_StandardBitmapMode(
         // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
         unsigned char *bitmapDataPtr)
 {
-    memset(bitmapDataPtr, 0x00, 8000);
+    memset(bitmapDataPtr, 0x00, BITMAP_SCREEN_SIZE_IN_BYTES);
 }
 
 void DrawPixel_StandardBitmapMode(
@@ -847,14 +823,14 @@ void DrawPixel_StandardBitmapMode(
     unsigned char xBit;
 
 #ifdef SAFE_DRAW
-    if ( (x < BITMAP_SCREEN_WIDTH) && (y < BITMAP_SCREEN_HEIGHT) )
+    if ( (x < STANDARD_BITMAP_SCREEN_WIDTH) && (y < STANDARD_BITMAP_SCREEN_HEIGHT) )
     {
 #endif
         // For more information on bitmap memory mapping see Commodore 64 Sound and Graphics, pg127, by Peter Falconer.
         yCell = y/8;
         xCell = x/8;
         yByte = y & 7;
-        index = (yCell*BITMAP_SCREEN_WIDTH) + (xCell*8) + yByte;
+        index = (yCell*STANDARD_BITMAP_SCREEN_WIDTH) + (xCell*8) + yByte;
         xBit = 7 - (x & 7);
         bitmapDataPtr[index] = bitmapDataPtr[index] | (0x01 << xBit);
 #ifdef SAFE_DRAW
@@ -877,14 +853,14 @@ void ClearPixel_StandardBitmapMode(
     unsigned char xBit;
 
 #ifdef SAFE_DRAW
-    if ( (x < BITMAP_SCREEN_WIDTH) && (y < BITMAP_SCREEN_HEIGHT) )
+    if ( (x < STANDARD_BITMAP_SCREEN_WIDTH) && (y < STANDARD_BITMAP_SCREEN_HEIGHT) )
     {
 #endif
         // For more information on bitmap memory mapping see Commodore 64 Sound and Graphics, pg127, by Peter Falconer.
         yCell = y/8;
         xCell = x/8;
         yByte = y & 7;
-        index = (yCell*BITMAP_SCREEN_WIDTH) + (xCell*8) + yByte;
+        index = (yCell*STANDARD_BITMAP_SCREEN_WIDTH) + (xCell*8) + yByte;
         xBit = 7 - (x & 7);
         bitmapDataPtr[index] = bitmapDataPtr[index] & (0xff - (0x01 << xBit));
 #ifdef SAFE_DRAW
@@ -907,10 +883,10 @@ void SetCellColor_StandardBitmapMode(
     unsigned short index;
 
 #ifdef SAFE_DRAW
-    if ( (x < (BITMAP_SCREEN_CELL_WIDTH)) && (y < (BITMAP_SCREEN_CELL_HEIGHT)) )
+    if ( (x < (CHARACTER_SCREEN_WIDTH)) && (y < (CHARACTER_SCREEN_HEIGHT)) )
     {
 #endif
-        index = ((unsigned short)y*(BITMAP_SCREEN_CELL_WIDTH)) + x;
+        index = ((unsigned short)y*(CHARACTER_SCREEN_WIDTH)) + x;
         colorDataPtr[index] = (foregroundColor << 4) | backgroundColor;
 #ifdef SAFE_DRAW
     }
@@ -1099,15 +1075,15 @@ void DrawHorizontalLine_StandardBitmapMode(
     }
 
 #ifdef SAFE_DRAW
-    if (x0 > (BITMAP_SCREEN_WIDTH-1))
+    if (x0 > (STANDARD_BITMAP_SCREEN_WIDTH-1))
     {
-        x0 = (BITMAP_SCREEN_WIDTH-1);
+        x0 = (STANDARD_BITMAP_SCREEN_WIDTH-1);
     }
-    if (x1 > (BITMAP_SCREEN_WIDTH-1))
+    if (x1 > (STANDARD_BITMAP_SCREEN_WIDTH-1))
     {
-        x1 = (BITMAP_SCREEN_WIDTH-1);
+        x1 = (STANDARD_BITMAP_SCREEN_WIDTH-1);
     }
-    if (y < BITMAP_SCREEN_HEIGHT)
+    if (y < STANDARD_BITMAP_SCREEN_HEIGHT)
     {
 #endif
         x = (signed short)x0;
@@ -1144,15 +1120,15 @@ void DrawVerticalLine_StandardBitmapMode(
         yDirection = -1;
     }
 #ifdef SAFE_DRAW
-    if (y0 > (BITMAP_SCREEN_HEIGHT-1))
+    if (y0 > (STANDARD_BITMAP_SCREEN_HEIGHT-1))
     {
-        y0 = (BITMAP_SCREEN_HEIGHT-1);
+        y0 = (STANDARD_BITMAP_SCREEN_HEIGHT-1);
     }
-    if (y1 > (BITMAP_SCREEN_HEIGHT-1))
+    if (y1 > (STANDARD_BITMAP_SCREEN_HEIGHT-1))
     {
-        y1 = (BITMAP_SCREEN_HEIGHT-1);
+        y1 = (STANDARD_BITMAP_SCREEN_HEIGHT-1);
     }
-    if (x < BITMAP_SCREEN_WIDTH)
+    if (x < STANDARD_BITMAP_SCREEN_WIDTH)
     {
 #endif
         y = (signed short)y0;
@@ -1270,6 +1246,431 @@ void SetMode_MulticolorBitmapMode(
     *BG_COLOR = backgroundColor;
 }
 
-void ClearScreen_MulticolorBitmapMode(void)
+void FillScreen_MulticolorBitmapMode(
+        // [in] byte containing four separate individual two bit patterns for color. Two-bit patterns can be alternated for shading (%00=background color, %01=foreground color1, %10=foreground color2, and %11=foreground color3). For solid colors use: %00000000=0x00=solid background color, %=01010101=0x55=solid foreground color1, %10101010=0xAA=solid foreground color2, and %11111111=0xFF=solid foreground color3
+        unsigned char bitPatternsFullByte,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
 {
+    memset(bitmapDataPtr, bitPatternsFullByte, BITMAP_SCREEN_SIZE_IN_BYTES);
 }
+
+void DrawPixel_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] pixel column index, a number between 0-159
+        unsigned short x,
+        // [in] pixel row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    unsigned short yCell;
+    unsigned short xCell;
+    unsigned short yByte;
+    unsigned short index;
+    unsigned char xBit;
+
+#ifdef SAFE_DRAW
+    if ( (x < MULTICOLOR_BITMAP_SCREEN_WIDTH) && (y < MULTICOLOR_BITMAP_SCREEN_HEIGHT) )
+    {
+#endif
+        // Adapted from Commodore 64 Sound and Graphics, pg127, by Peter Falconer.
+        yCell = y/8;
+        xCell = x/4;
+        yByte = y & 7;
+        index = ( ( (yCell*MULTICOLOR_BITMAP_SCREEN_WIDTH) + (xCell*4) ) * 2) + yByte;
+        xBit = (3 - (x & 3)) * 2;
+        bitmapDataPtr[index] = bitmapDataPtr[index] & (0xff - (0x03 << xBit)) | (twoBitPattern << xBit);
+#ifdef SAFE_DRAW
+    }
+#endif
+}
+
+void ClearPixel_MulticolorBitmapMode(
+        // [in] column index, a number between 0-159
+        unsigned short x,
+        // [in] row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    unsigned short yCell;
+    unsigned short xCell;
+    unsigned short yByte;
+    unsigned short index;
+    unsigned char xBit;
+
+#ifdef SAFE_DRAW
+    if ( (x < MULTICOLOR_BITMAP_SCREEN_WIDTH) && (y < MULTICOLOR_BITMAP_SCREEN_HEIGHT) )
+    {
+#endif
+        // Adapted from Commodore 64 Sound and Graphics, pg127, by Peter Falconer.
+        yCell = y/8;
+        xCell = x/4;
+        yByte = y & 7;
+        index = ( ( (yCell*MULTICOLOR_BITMAP_SCREEN_WIDTH) + (xCell*4) ) * 2) + yByte;
+        xBit = (3 - (x & 3)) * 2;
+        bitmapDataPtr[index] = bitmapDataPtr[index] & (0xff - (0x03 << xBit));
+#ifdef SAFE_DRAW
+    }
+#endif
+}
+
+// Generalized Bresenham's line algorithm for Octant0: https://www.phatcode.net/res/224/files/html/ch35/35-03.html
+void DrawOctant0Line_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] horizontal line length (must be > 0)
+        signed short deltaX,
+        // [in] vertical line length (must be > 0)
+        signed short deltaY,
+        // [in] -1 to draw line from right to left, 1 to draw from left to right
+        signed short xDirection,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    signed short deltaYx2 = deltaY * 2;
+    signed short deltaYx2MinusDeltaXx2 = deltaYx2 - (deltaX * 2);
+    signed short error = deltaYx2 - deltaX;
+
+    unsigned short x = x0;
+    unsigned short y = y0;
+#ifdef DEBUG
+    printf("0:dyx2-dxx2=%d,dyx2=%d,dx=%d,dy=%d,xdir=%d ", deltaYx2MinusDeltaXx2, deltaYx2, deltaX, deltaY, xDirection);
+#endif
+    DrawPixel_MulticolorBitmapMode(twoBitPattern, x, y, bitmapDataPtr);
+    while (deltaX > 0)
+    {
+        deltaX--;
+#ifdef DEBUG
+        printf("0:%x,%x,%d ", x, y, error);
+#endif
+        if (error >= 0)
+        {
+            y++;
+            error += deltaYx2MinusDeltaXx2;
+        }
+        else
+        {
+            error += deltaYx2;
+        }
+        x += xDirection;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, x, y, bitmapDataPtr);
+    }
+}
+
+// Generalized Bresenham's line algorithm for Octant1: https://www.phatcode.net/res/224/files/html/ch35/35-03.html
+void DrawOctant1Line_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] horizontal line length (must be > 0)
+        signed short deltaX,
+        // [in] vertical line length (must be > 0)
+        signed short deltaY,
+        // [in] -1 to draw line from right to left, 1 to draw from left to right
+        signed short xDirection,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    signed short deltaXx2 = deltaX * 2;
+    signed short deltaXx2MinusDeltaYx2 = deltaXx2 - (deltaY * 2);
+    signed short error = deltaXx2 - deltaY;
+
+    unsigned short x = x0;
+    unsigned short y = y0;
+#ifdef DEBUG
+    printf("1:dxx2-dyx2=%d,dxx2=%d,dx=%d,dy=%d,xdir=%d ", deltaXx2MinusDeltaYx2, deltaXx2, deltaX, deltaY, xDirection);
+#endif
+    DrawPixel_MulticolorBitmapMode(twoBitPattern, x, y, bitmapDataPtr);
+    while (deltaY > 0)
+    {
+        deltaY--;
+#ifdef DEBUG
+        printf("1:%x,%x,%d ", x, y, error);
+#endif
+        if (error >= 0)
+        {
+            x += xDirection;
+            error += deltaXx2MinusDeltaYx2;
+        }
+        else
+        {
+            error += deltaXx2;
+        }
+        y++;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, x, y, bitmapDataPtr);
+    }
+}
+
+// Generalized Bresenham's line algorithm: https://www.phatcode.net/res/224/files/html/ch35/35-03.html
+void DrawLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] ending column index, a number between 0-159
+        unsigned short x1,
+        // [in] ending row index, a number between 0-199
+        unsigned short y1,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    unsigned short temp;
+    signed short deltaX;
+    signed short deltaY;
+
+    if (y0 > y1)
+    {
+        temp = y0;
+        y0 = y1;
+        y1 = temp;
+
+        temp = x0;
+        x0 = x1;
+        x1 = temp;
+    }
+
+    //TODO: add SAFE_DRAW logic
+
+    deltaX = (signed short)x1 - (signed short)x0;
+    deltaY = (signed short)y1 - (signed short)y0;
+    if (deltaX > 0)
+    {
+        if (deltaX > deltaY)
+        {
+#ifdef DEBUG
+            printf("a0:x0=%x,y0=%x,x1=%x,y1=%x,dx=%d,dy=%d,xdir=%d ", x0, y0, x1, y1, deltaX, deltaY, 1);
+#endif
+            DrawOctant0Line_MulticolorBitmapMode(twoBitPattern, x0, y0, deltaX, deltaY, (signed short)1, bitmapDataPtr);
+        }
+        else
+        {
+#ifdef DEBUG
+            printf("a1:x0=%x,y0=%x,x1=%x,y1=%x,dx=%d,dy=%d,xdir=%d ", x0, y0, x1, y1, deltaX, deltaY, 1);
+#endif
+            DrawOctant1Line_MulticolorBitmapMode(twoBitPattern, x0, y0, deltaX, deltaY, (signed short)1, bitmapDataPtr);
+        }
+    }
+    else
+    {
+        deltaX = -deltaX;
+        if (deltaX > deltaY)
+        {
+#ifdef DEBUG
+            printf("b0:x0=%x,y0=%x,x1=%x,y1=%x,dx=%d,dy=%d,xdir=%d ", x0, y0, x1, y1, deltaX, deltaY, -1);
+#endif
+            DrawOctant0Line_MulticolorBitmapMode(twoBitPattern, x0, y0, deltaX, deltaY, (signed short)-1, bitmapDataPtr);
+        }
+        else
+        {
+#ifdef DEBUG
+            printf("b1:x0=%x,y0=%x,x1=%x,y1=%x,dx=%d,dy=%d,xdir=%d ", x0, y0, x1, y1, deltaX, deltaY, -1);
+#endif
+            DrawOctant1Line_MulticolorBitmapMode(twoBitPattern, x0, y0, deltaX, deltaY, (signed short)-1, bitmapDataPtr);
+        }
+    }
+}
+
+void DrawHorizontalLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] starting column index, a number between 0-159
+        unsigned short x0,
+        // [in] ending column index, a number between 0-159
+        unsigned short x1,
+        // [in] row index, a number between 0-199
+        unsigned short y,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    signed short xDirection;
+    signed short x;
+
+    if (x1 > x0)
+    {
+        xDirection = 1;
+    }
+    else
+    {
+        xDirection = -1;
+    }
+
+#ifdef SAFE_DRAW
+    if (x0 > (MULTICOLOR_BITMAP_SCREEN_WIDTH-1))
+    {
+        x0 = (MULTICOLOR_BITMAP_SCREEN_WIDTH-1);
+    }
+    if (x1 > (MULTICOLOR_BITMAP_SCREEN_WIDTH-1))
+    {
+        x1 = (MULTICOLOR_BITMAP_SCREEN_WIDTH-1);
+    }
+    if (y < MULTICOLOR_BITMAP_SCREEN_HEIGHT)
+    {
+#endif
+        x = (signed short)x0;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)x, y, bitmapDataPtr);
+        while (x != (signed short)x1)
+        {
+            x += xDirection;
+            DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)x, y, bitmapDataPtr);
+        }
+#ifdef SAFE_DRAW
+    }
+#endif
+}
+
+void DrawVerticalLine_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index, a number between 0-159
+        unsigned short x,
+        // [in] starting row index, a number between 0-199
+        unsigned short y0,
+        // [in] ending row index, a number between 0-199
+        unsigned short y1,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    signed short yDirection;
+    signed short y;
+
+    if (y1 > y0)
+    {
+        yDirection = 1;
+    }
+    else
+    {
+        yDirection = -1;
+    }
+#ifdef SAFE_DRAW
+    if (y0 > (MULTICOLOR_BITMAP_SCREEN_HEIGHT-1))
+    {
+        y0 = (MULTICOLOR_BITMAP_SCREEN_HEIGHT-1);
+    }
+    if (y1 > (MULTICOLOR_BITMAP_SCREEN_HEIGHT-1))
+    {
+        y1 = (MULTICOLOR_BITMAP_SCREEN_HEIGHT-1);
+    }
+    if (x < MULTICOLOR_BITMAP_SCREEN_WIDTH)
+    {
+#endif
+        y = (signed short)y0;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, x, (unsigned short)y, bitmapDataPtr);
+        while (y != (signed short)y1)
+        {
+            y += yDirection;
+            DrawPixel_MulticolorBitmapMode(twoBitPattern, x, (unsigned short)y, bitmapDataPtr);
+        }
+#ifdef SAFE_DRAW
+    }
+#endif
+}
+
+void DrawRectangle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of top left corner of rectangle, a number between 0-159
+        unsigned short x,
+        // [in] row index of top left corner of rectangle, a number between 0-199
+        unsigned short y,
+        // [in] column width of rectangle, a number between 0-159 (must be on screen)
+        unsigned short width,
+        // [in] row height of rectangle, a number between 0-199 (must be on screen)
+        unsigned short height,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    DrawHorizontalLine_MulticolorBitmapMode(twoBitPattern, x,       x+width, y,        bitmapDataPtr);
+    DrawHorizontalLine_MulticolorBitmapMode(twoBitPattern, x,       x+width, y+height, bitmapDataPtr);
+    DrawVerticalLine_MulticolorBitmapMode(twoBitPattern,   x,       y,       y+height, bitmapDataPtr);
+    DrawVerticalLine_MulticolorBitmapMode(twoBitPattern,   x+width, y,       y+height, bitmapDataPtr);
+}
+
+void DrawTriangle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x1,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y1,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x2,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y2,
+        // [in] column index of corner of the triangle, a number between 0-159
+        unsigned short x3,
+        // [in] row index of corner of the triangle, a number between 0-199
+        unsigned short y3,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    DrawLine_MulticolorBitmapMode(twoBitPattern, x1, y1, x2, y2, bitmapDataPtr);
+    DrawLine_MulticolorBitmapMode(twoBitPattern, x2, y2, x3, y3, bitmapDataPtr);
+    DrawLine_MulticolorBitmapMode(twoBitPattern, x3, y3, x1, y1, bitmapDataPtr);
+}
+
+// Bresenham's Circle Algorithm: http://members.chello.at/~easyfilter/bresenham.html and http://members.chello.at/%7Eeasyfilter/Bresenham.pdf
+void DrawCircle_MulticolorBitmapMode(
+        // [in] two bit pattern for color: %00=0x00=background color, %01=0x01=foreground color1, %10=0x02=foreground color2, and %11=0x03=foreground color3
+        unsigned char twoBitPattern,
+        // [in] column index of the center of the circle, a number between 0-159
+        unsigned short x0,
+        // [in] row index of the center of the circle, a number between 0-199
+        unsigned short y0,
+        // [in] radius of circle
+        unsigned short radius,
+        // [in] bitmapDataPtr from BitmapModeMemoryMappedAddresses_t
+        unsigned char *bitmapDataPtr)
+{
+    signed short sRadius = (signed short)radius;
+    signed short x = -sRadius;
+    signed short y = 0;
+    signed short error = 2-(2*sRadius);
+    signed short point0_x;
+    signed short point0_y;
+    signed short point1_x;
+    signed short point1_y;
+    signed short point2_x;
+    signed short point2_y;
+    signed short point3_x;
+    signed short point3_y;
+
+    do
+    {
+        point0_x = (signed short)x0 - x;
+        point0_y = (signed short)y0 + y;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)point0_x, (unsigned short)point0_y, bitmapDataPtr);
+        point1_x = (signed short)x0 - y;
+        point1_y = (signed short)y0 - x;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)point1_x, (unsigned short)point1_y, bitmapDataPtr);
+        point2_x = (signed short)x0 + x;
+        point2_y = (signed short)y0 - y;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)point2_x, (unsigned short)point2_y, bitmapDataPtr);
+        point3_x = (signed short)x0 + y;
+        point3_y = (signed short)y0 + x;
+        DrawPixel_MulticolorBitmapMode(twoBitPattern, (unsigned short)point3_x, (unsigned short)point3_y, bitmapDataPtr);
+        sRadius = error;
+        if (sRadius <= y)
+        {
+            y++;
+            error += y*2+1;
+        }
+        if ( (sRadius > x) || (error > y) )
+        {
+            x++;
+            error +=  x*2+1;
+        }
+    } while (x < 0);
+}
+

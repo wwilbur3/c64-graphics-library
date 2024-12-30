@@ -22,7 +22,7 @@ Supports the following VIC-II graphic modes:
 - Multicolor Character Mode
 - Extended (Background) Color Mode
 - (Standard) Bitmap (High Resolution) Mode
-- TBD: Multicolor Bitmap Mode
+- Multicolor Bitmap Mode
 
 Build with:
 - KICKC
