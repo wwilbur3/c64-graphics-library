@@ -1,4 +1,4 @@
-/** Copyright 2024 Warren Wilbur - MIT License
+/** Copyright 2024-2026 Warren Wilbur - MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,6 +50,8 @@
 // constants for C64 standard bitmap mode
 #define STANDARD_BITMAP_SCREEN_WIDTH 320
 #define STANDARD_BITMAP_SCREEN_HEIGHT 200
+#define BITMAP_SCREEN_CELL_WIDTH 40
+#define BITMAP_SCREEN_CELL_HEIGHT 25
 
 // constants for C64 multicolor bitmap mode
 #define MULTICOLOR_BITMAP_SCREEN_WIDTH 160
@@ -57,7 +59,7 @@
 
 
 /** Determines if drawing routines will truncate drawing outside the screen space (useful if you want to draw lines, rectangles,
- * circles that are only partly on screen) */
+ * circles that are only partly on screen). TBD: Not fully implemented... */
 //#define SAFE_DRAW
 
 /** VIC-II Graphics Chip Routines */

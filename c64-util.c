@@ -1,4 +1,4 @@
-/** Copyright 2024 Warren Wilbur - MIT License
+/** Copyright 2024-2026 Warren Wilbur - MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the �Software�), to
@@ -24,28 +24,47 @@
     #include <c64-keyboard.h>
 #else //SDCC, CC65, VBCC, OSCAR64
     #define RASTER         ((unsigned char*)0xD012)
-    #include <stdio.h>
-//    #ifndef VBCC
-//        #include <conio.h>
-//    #endif
+    #ifdef OSCAR64
+        #include <conio.h>
+    #else //SDCC, CC65, VBCC
+        #include <stdio.h>
+//        #ifndef VBCC
+//            #include <conio.h>
+//        #endif
+    #endif
 #endif
 
 #ifdef KICKC
+    // Assumptions: you have already called keyboard_init() (from c64-keyboard.h) before using this function
     bool CheckIfKeyPressed(
-            //! [in] keyboard scan code to wait until pressed
-            char desiredKey)
+            //! [in] keyboard scan code to check if pressed
+            char desiredKey_scanCode)
     {
         char ch = 0xFF;
 
         keyboard_event_scan();
         ch = keyboard_event_get();
-        return (ch != desiredKey);
+        return (ch != desiredKey_scanCode);
+    }
+
+    // Assumptions: you have already called keyboard_init() (from c64-keyboard.h) before using this function
+    // return the scancode of the next key that is pressed
+    char GetNextKeyPressed(void)
+    {
+        char ch = 0xFF;
+        do
+        {
+            keyboard_event_scan();
+            ch = keyboard_event_get();
+        } while (ch == 0xFF);
+
+        return ch;
     }
 
     // Assumptions: you have already called keyboard_init() (from c64-keyboard.h) before using this function
     void WaitUntilKeyPressed(
         //! [in] PETSCII code for the key to wait until pressed (use codes in c64-keyboard.h)
-        char desiredKey)
+        char desiredKey_scanCode)
     {
         char ch = 0xFF;
 
@@ -53,20 +72,57 @@
         {
             keyboard_event_scan();
             ch = keyboard_event_get();
-        } while(ch != desiredKey);
+        } while (ch != desiredKey_scanCode);
     }
 #else //SDCC, CC65, VBCC, OSCAR64
-    void WaitUntilKeyPressed(
-            //! [in] keyboard scan code to wait until pressed
-            char desiredKey)
-    {
-        char ch = 0xFF;
-
-        do
+    #ifdef OSCAR64
+        bool CheckIfKeyPressed(
+                //! [in] keyboard scan code to wait until pressed
+                char desiredKey_scanCode)
         {
-            ch = getchar();
-        } while(ch != desiredKey);
-    }
+            char ch;
+
+            ch = getchx();
+            return (ch != desiredKey_scanCode);
+        }
+
+        // return the scancode of the next key that is pressed
+        char GetNextKeyPressed(void)
+        {
+            char ch = 0x00;
+
+            do
+            {
+                ch = getchx();
+            } while (ch == 0x00);
+
+            return ch;
+        }
+
+        void WaitUntilKeyPressed(
+                //! [in] keyboard scan code to wait until pressed
+                char desiredKey_scanCode)
+        {
+            char ch = 0xFF;
+
+            do
+            {
+                ch = getchx();
+            } while(ch != desiredKey_scanCode);
+        }
+    #else //SDCC, CC65, VBCC
+        void WaitUntilKeyPressed(
+                //! [in] keyboard scan code to wait until pressed
+                char desiredKey_scanCode)
+        {
+            char ch = 0xFF;
+
+            do
+            {
+                ch = getchar();
+            } while (ch != desiredKey_scanCode);
+        }
+    #endif
 #endif
 
 // Use this to prevent screen tearing

@@ -1,4 +1,4 @@
-/** Copyright 2024 Warren Wilbur - MIT License
+/** Copyright 2024-2026 Warren Wilbur - MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the �Software�), to
@@ -22,20 +22,19 @@
 #ifndef C64_UTIL_H
 #define C64_UTIL_H
 
-#ifdef KICKC
-    bool CheckIfKeyPressed(
-        //! [in] keyboard scan code to wait until pressed
-        char desiredKey);
+// Assumptions: If using KICKC you must call keyboard_init() (from c64-keyboard.h) before using this function
+bool CheckIfKeyPressed(
+    //! [in] keyboard scan code to check if pressed
+    char desiredKey);
 
-    // Assumptions: you have already called keyboard_init() (from c64-keyboard.h) before using this function
-    void WaitUntilKeyPressed(
-        //! [in] PETSCII code for the key to wait until pressed (use codes in c64-keyboard.h)
-        char desiredKey);
-#else //SDCC, CC65, VBCC, OSCAR64
-    void WaitUntilKeyPressed(
-        //! [in] keyboard scan code to wait until pressed
-        char desiredKey);
-#endif
+// Assumptions: If using KICKC you must call keyboard_init() (from c64-keyboard.h) before using this function
+// return the scancode of the next key that is pressed
+char GetNextKeyPressed(void);
+
+// Assumptions: If using KICKC you must call keyboard_init() (from c64-keyboard.h) before using this function
+void WaitUntilKeyPressed(
+    //! [in] PETSCII code for the key to wait until pressed (use codes in c64-keyboard.h)
+    char desiredKey);
 
 // Use this to prevent screen tearing
 void WaitUntilRasterOffscreen(void);
